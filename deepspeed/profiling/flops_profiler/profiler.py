@@ -17,6 +17,8 @@ from deepspeed.moe.layer import MoE
 from deepspeed.utils.timer import FORWARD_GLOBAL_TIMER, BACKWARD_GLOBAL_TIMER, STEP_GLOBAL_TIMER
 from deepspeed.utils.torch import required_torch_version
 
+from .sparse_flops import sparse_flops, sparse_linear_flops_compute, sparse_matmul_flops_compute
+
 Tensor = torch.Tensor
 
 module_flop_count = []
@@ -511,7 +513,7 @@ def _prod(dims):
         p *= v
     return p
 
-
+@sparse_flops(sparse_linear_flops_compute)
 def _linear_flops_compute(input, weight, bias=None):
     out_features = weight.shape[0]
     macs = input.numel() * out_features
@@ -748,7 +750,7 @@ def _embedding_flops_compute(
 def _dropout_flops_compute(input, p=0.5, training=True, inplace=False):
     return 0, 0
 
-
+@sparse_flops(sparse_matmul_flops_compute)
 def _matmul_flops_compute(input, other, *, out=None):
     """
     Count flops for the matmul operation.
