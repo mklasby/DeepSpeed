@@ -758,7 +758,7 @@ def _matmul_flops_compute(input, other, *, out=None):
     macs = _prod(input.shape) * other.shape[-1]
     return 2 * macs, macs
 
-
+# TODO: Sparse support
 def _addmm_flops_compute(input, mat1, mat2, *, beta=1, alpha=1, out=None):
     """
     Count flops for the addmm operation.
@@ -788,7 +788,7 @@ def _einsum_flops_compute(equation, *operands):
             return flop, 0
     raise NotImplementedError("Unsupported einsum operation.")
 
-
+# todo
 def _tensor_addmm_flops_compute(self, mat1, mat2, *, beta=1, alpha=1, out=None):
     """
     Count flops for the tensor addmm operation.
@@ -1172,7 +1172,8 @@ def get_model_profile(model,
                       as_string=True,
                       output_file=None,
                       ignore_modules=None,
-                      mode='forward'):
+                      mode='forward',
+                      input_dtype: None | torch.dtype = None):
     """Returns the total floating-point operations, MACs, and parameters of a model.
 
     Example:
@@ -1208,9 +1209,11 @@ def get_model_profile(model,
         assert type(input_shape) is tuple, "input_shape must be a tuple"
         assert len(input_shape) >= 1, "input_shape must have at least one element"
         try:
+            if input_dtype is None:
+                input_dtype = next(model.parameters()).dtype
             input = torch.ones(()).new_empty(
                 (*input_shape, ),
-                dtype=next(model.parameters()).dtype,
+                dtype=input_dtype,
                 device=next(model.parameters()).device,
             )
         except StopIteration:
